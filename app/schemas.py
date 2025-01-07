@@ -12,6 +12,10 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     type: UserTypeEnum
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
  
 class UserOut(BaseModel):
     id: int
@@ -49,3 +53,7 @@ class Order(BaseModel):
 
     class Config:
         from_attributes = True
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str

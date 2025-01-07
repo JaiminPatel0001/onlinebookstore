@@ -9,7 +9,7 @@ from .. import models, schemas
 from ..database import get_db
 from typing import Optional
 from fastapi.encoders import jsonable_encoder
-# from fastapi.security import OAuth2PasswordBearer
+
 
 
 router = APIRouter()
@@ -20,8 +20,7 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+ 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -42,13 +41,6 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-# def verify_admin(token: str = Depends(oauth2_scheme)):
-#     try:
-#         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-#         if "type" not in payload or payload["type"] != "Admin":
-#             raise HTTPException(status_code=403, detail="Not authorized as admin")
-#     except jwt.JWTError:
-#         raise HTTPException(status_code=403, detail="Invalid token:")
 
 @router.post("/register", response_model=schemas.UserOut)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
@@ -59,13 +51,10 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.refresh(db_user)
     return db_user
 
-@router.post("/login")
-def login(user: schemas.UserCreate, db: Session = Depends(get_db)):
+@router.post("/login",response_model=schemas.Token)
+def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.username == user.username).first()
     if not db_user or not verify_password(user.password, db_user.password):
         raise HTTPException(status_code=400, detail="Invalid credentials")
     access_token = create_access_token(data={"sub": db_user.username, "type": db_user.type})
-
     return {"access_token": access_token, "token_type": "bearer"}
-
-
